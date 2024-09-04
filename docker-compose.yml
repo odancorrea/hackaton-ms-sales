@@ -1,0 +1,88 @@
+version: "3.8"
+services:
+  sales:
+    container_name: ms-sales
+    restart: always
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - "3031:3031"
+    networks:
+      - mynetwork
+    depends_on:
+      - queue
+      - db
+    environment:
+      - PORT=3031
+  stock:
+    container_name: ms-stock
+    restart: always
+    build:
+      context: ./../hackaton-ms-stock
+      dockerfile: Dockerfile
+    ports:
+      - "3032:3032"
+    networks:
+      - mynetwork
+    depends_on:
+      - queue
+      - db
+    environment:
+      - PORT=3032
+  payment:
+    container_name: ms-payment
+    restart: always
+    build:
+      context: ./../hackaton-ms-payment
+      dockerfile: Dockerfile
+    ports:
+      - "3033:3033"
+    networks:
+      - mynetwork
+    depends_on:
+      - queue
+      - db
+    environment:
+      - PORT=3033
+  db:
+    image: postgres
+    container_name: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    networks:
+      - mynetwork
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: strong-password
+    volumes:
+      - local_pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: strong-password
+      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+  queue:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - mynetwork
+
+volumes:
+  local_pgdata:
+  pgadmin-data:
+
+networks:
+  mynetwork:
+    driver: bridge
